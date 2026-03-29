@@ -43,6 +43,8 @@ def markdown_to_html(md):
 		html.append(markdown_process_line(line))
 	return ''.join(html)
 
+#TODO: add alternative convert file when none selected
+
 markdown_alt = """
 
 # Alternative heading
