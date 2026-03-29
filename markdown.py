@@ -1,3 +1,6 @@
+from tkinter.filedialog import askopenfilename
+import os
+
 def markdown_process_line(line):
 
 	if line.startswith("######"):
@@ -40,8 +43,7 @@ def markdown_to_html(md):
 		html.append(markdown_process_line(line))
 	return ''.join(html)
 
-
-markdown = """
+markdown_alt = """
 
 # Alternative heading
 
@@ -58,7 +60,14 @@ Horizontal rule:
 
 """
 
-html = markdown_to_html(markdown)
+file_to_convert = askopenfilename(filetypes=[("Markdown files", "*.md"), ("Text files", "*.txt")])
 
-with open("md.html", "w", encoding="utf-8") as f:
-	f.write(html)
+
+if file_to_convert:
+	with open(file_to_convert, "r", encoding="utf-8") as f:
+		markdown = f.read()
+
+	html = markdown_to_html(markdown)
+
+	with open("md.html", "w", encoding="utf-8") as f:
+		f.write(html)
