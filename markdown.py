@@ -1,64 +1,148 @@
 from tkinter.filedialog import askopenfilename
 import os
 
-def markdown_process_line(line):
+def _process_single_line(line):
+  output = ""
 
-	if line.startswith("######"):
-		return f"<h6>{line[6:]}</h6>"
+  ST_TEXT = "text"
+  ST_AST = "*"
+  ST_UND = "_"
+  ST_MONO = "`"
 
-	if line.startswith("#####"):
-		return f"<h5>{line[5:]}</h5>"
+  s_i = False
+  s_b = False
+  s_m = False
+  s_u = False
 
-	if line.startswith("####"):
-		return f"<h4>{line[4:]}</h4>"
+  state = ST_TEXT
 
-	if line.startswith("###"):
-		return f"<h3>{line[3:]}</h3>"
+  i = -1
+  while True:
+    i += 1
+    if i > len(line):
+      break
 
-	if line.startswith("##"):
-		return f"<h2>{line[2:]}</h2>"
+    if i == len(line):
+      ch = None
+    else:
+      ch = line[i]
 
-	if line.startswith("#"):
-		return f"<h1>{line[1:]}</h1>"
+    if state == ST_TEXT:
+      if ch == "_":
+        state = ST_UND
+        continue
 
-	if line.startswith("---"):
-		return f"<hr>"
+      if ch == "*":
+        state = ST_AST
+        continue
 
-	if line == "" ctx['p']:
-		p = f"<p>{ctx['p']}</p>"
-		ctx['p'] = ""
-		return p
+      if ch == "`":
+        state = ST_MONO
+        continue
 
-	if ctx['p']:
-		ctx['p']= ctx['p']+ '\n' + line
-	else:
-		ctx['p'] = line
-	return ""
+      if ch is not None:
+        output += ch
+      continue
 
-	p = []
+    if state == ST_MONO:
+      s_m = not s_m
+      if s_m:
+        output += "<code>"
+      else:
+        output += "</code>"
+      state = ST_TEXT
+      i -= 1
+      continue
 
-	ST_P = "p"
-	ST_UL = "+"
+    if state == ST_AST:
+      if ch == "*":
+        s_b = not s_b
+        if s_b:
+          output += "<b>"
+        else:
+          output += "</b>"
+        state = ST_TEXT
+        continue
 
-	state = ST_P
+      s_i = not s_i
+      if s_i:
+        output += "<i>"
+      else:
+        output += "</i>"
+      state = ST_TEXT
+      i -= 1
+      continue
 
-	for ch in line:
+    if state == ST_UND:
+      if ch == "_":
+        s_u = not s_u
+        if s_u:
+          output += "<u>"
+        else:
+          output += "</u>"
+        state = ST_TEXT
+        continue
 
-		if state == ST_P:
-			pass
-		if state == ST_UL:
-			return f"<ul><li>{line[1:]}</li></ul>"
-	return ""
+      s_i = not s_i
+      if s_i:
+        output += "<i>"
+      else:
+        output += "</i>"
+      state = ST_TEXT
+      i -= 1
+      continue
+
+  return output
+
+def _markdown_process_line(line, ctx):
+  if line.startswith("######"):
+    return f"<h6>{line[6:]}</h6>"
+
+  if line.startswith("#####"):
+    return f"<h5>{line[5:]}</h5>"
+
+  if line.startswith("####"):
+    return f"<h4>{line[4:]}</h4>"
+
+  if line.startswith("###"):
+    return f"<h3>{line[3:]}</h3>"
+
+  if line.startswith("##"):
+    return f"<h2>{line[2:]}</h2>"
+
+  if line.startswith("#"):
+    return f"<h1>{line[1:]}</h1>"
+
+  if line == "---":
+    return "<hr>"
+
+  if line == "" and ctx['p']:
+    p = f"<p>{ctx['p']}</p>"
+    ctx['p'] = ""
+    return p
+
+  line = _process_single_line(line)
+
+  if ctx['p']:
+    ctx['p'] = ctx['p'] + '\n' + line
+  else:
+    ctx['p'] = line
+
+  return ""
 
 
 def markdown_to_html(md):
-	ctx = {
-	"p":"",
-	} #context
-	html = []
-	for line in md.splitlines():
-		html.append(markdown_process_line(line))
-	return ''.join(html)
+  ctx = {
+    "p": ""
+  }
+  html = []
+  for line in md.splitlines():
+    html.append(_markdown_process_line(line, ctx))
+
+  html.append(_markdown_process_line("", ctx))
+
+  return ''.join(html)
+
 
 #TODO: add alternative convert file when none selected
 
