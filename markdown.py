@@ -24,9 +24,21 @@ def markdown_process_line(line):
 	if line.startswith("---"):
 		return f"<hr>"
 
+	if line == "" ctx['p']:
+		p = f"<p>{ctx['p']}</p>"
+		ctx['p'] = ""
+		return p
+
+	if ctx['p']:
+		ctx['p']= ctx['p']+ '\n' + line
+	else:
+		ctx['p'] = line
+	return ""
+
 	p = []
 
 	ST_P = "p"
+	ST_UL = "+"
 
 	state = ST_P
 
@@ -34,10 +46,15 @@ def markdown_process_line(line):
 
 		if state == ST_P:
 			pass
+		if state == ST_UL:
+			return f"<ul><li>{line[1:]}</li></ul>"
 	return ""
 
 
 def markdown_to_html(md):
+	ctx = {
+	"p":"",
+	} #context
 	html = []
 	for line in md.splitlines():
 		html.append(markdown_process_line(line))
